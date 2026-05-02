@@ -1,0 +1,79 @@
+---
+title: "모노레포 이해해보기"
+date: 2025-10-12
+summary: "모노 레포가 어떤 문제를 해결하기 위한 방법인지를 이해하고 간단한 프로젝트로 구현해보자"
+
+tags:
+  - monorepo
+  - yarn
+  - pnp
+  - workspace
+---
+
+```yaml
+nodeLinker: pnp
+
+enableGlobalCache: true
+
+npmRegistryServer: "https://registry.yarnpkg.com"
+```
+
+**주요 설정:**
+
+- **`nodeLinker: pnp`**: PnP 모드 활성화
+- **`enableGlobalCache: true`**: 글로벌 캐시 사용
+- **`npmRegistryServer`**: npm 레지스트리 URL
+
+### 3. 워크스페이스 패키지 설정
+
+```json
+// shared/package.json
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "main": "index.js"
+}
+
+// service-a/package.json
+{
+  "name": "service-a",
+  "version": "1.0.0",
+  "dependencies": {
+    "shared": "workspace:*"
+  }
+}
+```
+
+**`workspace:*` 프로토콜:**
+
+- 로컬 워크스페이스의 **최신 코드**를 항상 참조
+- 버전 관리 불필요
+- 변경 사항 즉시 반영
+
+### 4. 워크스페이스 확인 및 실행
+
+```bash
+# 워크스페이스 목록 확인
+yarn workspaces list
+# shared
+# service-a
+# service-b
+
+# 워크스페이스 정보 조회
+yarn workspace service-a info
+# ├─ service-a@workspace:service-a
+# │  └─ Dependencies
+# │     └─ shared@workspace:* → workspace:shared
+```
+
+## 마치며
+
+내게 모노레포는 이미 세팅이 되어있다보니, 블랙박스와 같은 부분이었다. 인컴 서비스 규모가 커짐에 따라 서비스가 늘어나는 것이 예상되는 상황에서 어떻게 프로젝트들의 의존관계를 관리하면 좋을까 고민이되었고, 이번에 정리할 수 있었다.
+
+이번 글에는 단순한 예제였지만, 여기에 배포 파이프라인과 인프라가 더해지면 더욱 복잡해지는데, 다음은 실제 Next 서비스를 여러개 있고, 배포하는 상황을 가정해서 배포 파이프라인을 구성하는 법을 고민해보고 정리해봐야겠다.
+
+## 참고 자료
+
+- [Yarn PnP 공식 문서](https://yarnpkg.com/features/pnp)
+- [토스 - node_modules로부터 우리를 구원해 줄 Yarn Berry](https://toss.tech/article/node-modules-and-yarn-berry)
+- [우리는 하나다! 모노레포 with pnpm](https://blog.banksalad.com/tech/monorepo-with-pnpm/)

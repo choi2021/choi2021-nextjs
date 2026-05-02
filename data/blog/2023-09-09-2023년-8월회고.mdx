@@ -1,0 +1,99 @@
+---
+title: "😊 2023년 8월 회고"
+
+date: 2023-09-09
+tags:
+  - 회고
+  - 에러모니터링
+  - 에러핸들링
+appId: com.twitter.android
+---
+- launchApp
+- assertVisible: Search and Explore
+```
+
+2.자동화 명령어
+
+```
+flashlight test --bundleId com.twitter.android \ // 실행할 앱의 bundle Id
+  --testCommand "maestro test twitter.yaml" \ // 실행할 e2e yaml 파일
+  --duration 10000 \ // 측정 시간
+  --resultsFilePath results.json // 결과 보고서를 저장하는 방식
+```
+
+\*\* 앱의 bundle Id는 `npx @perf-profiler/profiler getCurrentApp` 를 통해서 구할 수 있다.
+
+3.결과 보기
+
+```
+flashlight report results.json
+```
+
+자동화 방식을 보면서 좀 더 객관화된 데이터를 얻을 수 있고 e2e 테스트를 확장함으로써 각 스크린에 대한 성능을 더 잘 측정할 수 있지 않을까란 기대감이 생겼다.
+
+#### 4. CI와 연동
+
+위의 자동화 script를 AWS Device Farm의 에뮬레이터를 가상 환경과의 연결 기능을 소개했다. 이를 통해서 프로젝트의 CI과정에서 성능 측정을 자동화 함으로써 주기적으로 리포팅을 받을 수 있지 않을까 기대감도 생겼다.
+
+#### 5. Cloud 환경
+
+마지막 apk를 올리고 원하는 e2e테스트 코드를 작성해서 성능을 가상환경에서 측정해주는 자체 서비스를 소개했다.
+
+사이트 주소는 다음과 같으며 성능 측정이 끝나게 되면 이메일로 결과를 받을 수 있고 결과를 보면 영상으로 나타난다.
+
+FPS, RAM/CPU 사용량 등이 그래프로 나타나지며 영상과 함께 연동되어 있어 어느 지점에서 많은 메모리가 사용되는 지 등을 한눈에 볼 수 있다.
+
+[Cloud 측정 사이트](https://app.flashlight.dev/)
+
+<img src="https://github.com/choi2021/choi2021.github.io/assets/80830981/a727c5ed-1bb8-45ef-bcc5-945929008d4c" width="800"/>
+
+[당시 공유했던 우리 앱의 측정 결과]
+
+<table>
+  <tr>
+    <th>전체 점수</th>
+  </tr>
+  <tr>
+    <td>
+    <img src="https://github.com/choi2021/choi2021.github.io/assets/80830981/e0eea30c-05b9-4c5a-8da4-6c932e6341a2" width="800" />
+    </td>
+  </tr>
+  <tr>
+    <th>FPS</th>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/choi2021/choi2021.github.io/assets/80830981/c2a00cf1-52a2-4d48-9a7a-602e105c4cfc" width="800" />
+    </td>
+  </tr>
+  <tr>
+    <th>CPU 사용량</th>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/choi2021/choi2021.github.io/assets/80830981/d6231d9e-9712-4dd3-9972-1d03568dadb8" width="800" />
+    </td>
+  </tr>
+  <tr>
+    <th>스레드 별 CPU 사용량</th>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/choi2021/choi2021.github.io/assets/80830981/ccb10691-fdcf-4577-b7fe-c442c6e5b707" width="800" />
+    </td>
+  </tr>
+  <tr>
+    <th>RAM 사용량</th>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/choi2021/choi2021.github.io/assets/80830981/f0d89756-9649-43f8-bf46-8c0fdcedb066" width="800" />
+    </td>
+  </tr>
+</table>
+
+사양이 아주 낮은 기기를 기준으로 하기 때문에 점수는 낮지만 이를 기준으로 개선되었는지를 보는데 사용할 수 있을 것 같아 보였다.
+
+발표내용에 대해서 챕터원 분들이 긍정적으로 들어주셨고 성능 개선 업무를 맡은 챕터원 분들께서 직접 좀 더 조사하시고 flash light를 이용해 성능 측정하는 일감에 적극적으로 사용되고 있다. 조사한 내용이 실제로 의미있는 데이터를 모으는데 도움이 되고 있다는 점에 기뻤고 계속해서 기술 세션들에 대해 관심을 갖게 되는 좋은 계기가 되었다.
+
+### 마치며
+
+8월 한달은 챕터업무가 주로 되었던 만큼 기능을 새롭게 개발하는 작업은 적었다. 챕터에 기여하는 작업을 한다는 것은 즐거웠지만 에러와 예외처리를 위해서 기존에 쌓여있던 로그들을 보며 앱이 강제로 종료되거나 화이트스크린이 왜 뜨는지 재현하기 어려워 하루 종일 로그들만 보다가 지나가기도 하고, 필요한 로그를 분류하기보다 불필요하게 쌓이고 있는 로그들을 먼저 제거하게 되기도 하면서 진행 방향이 중간중간 바뀌기도 했다. 순간 순간 하루를 돌아보면서 `내가 의미있는 작업을 하는 걸까, 내가 잘못하고 있는 것은 아닐까` 고민이 되기도 했지만 챕터원들의 격려에 힘을 받아 진행했던 한달이었다.
+
+에러/ 예외처리라는 일이 당장 눈에 보이는 성과가 적은 일이지만 내가 하는 작업을 통해서 누군가 겪고 있는 에러들을 막으면서 안정성을 높여 더 많은 사람들이 편하게 사용할 수 있기를 기대하고 더 힘내서 진행해보고자 한다. 그리고 혼자서 끙끙대기 보다 각 도메인을 잘 아시는 분들께 적극적으로 도움을 청함으로써 더 효율적으로 일해 9월까지 3분기를 잘 마무리해보려한다.

@@ -1,28 +1,28 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Next.js Starter Blog',
-  author: 'Tails Azimuth',
-  headerTitle: 'TailwindBlog',
-  description: 'A blog created with Next.js and Tailwind.css',
-  language: 'en-us',
+  title: 'Choi2021 DevLog',
+  author: 'choi2021',
+  headerTitle: 'choi2021 DevLog',
+  description: '매일의 시행착오를 기록하는 개발일지입니다.',
+  language: 'ko-KR',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
-  siteRepo: 'https://github.com/timlrx/tailwind-nextjs-starter-blog',
-  siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
+  siteUrl: 'https://choi2021.com',
+  siteRepo: 'https://github.com/choi2021/choi2021-nextjs',
+  siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.svg`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
-  mastodon: 'https://mastodon.social/@mastodonuser',
-  email: 'address@yoursite.com',
-  github: 'https://github.com',
-  x: 'https://twitter.com/x',
+  mastodon: '',
+  email: 'juni2004c@gmail.com',
+  github: 'https://github.com/choi2021',
+  x: '',
   // twitter: 'https://twitter.com/Twitter',
-  facebook: 'https://facebook.com',
-  youtube: 'https://youtube.com',
-  linkedin: 'https://www.linkedin.com',
-  threads: 'https://www.threads.net',
-  instagram: 'https://www.instagram.com',
-  medium: 'https://medium.com',
-  bluesky: 'https://bsky.app/',
-  locale: 'en-US',
+  facebook: '',
+  youtube: '',
+  linkedin: 'https://www.linkedin.com/in/%EC%98%81%EC%A4%80-%EC%B5%9C-3a316825a/',
+  threads: '',
+  instagram: '',
+  medium: '',
+  bluesky: '',
+  locale: 'ko-KR',
   // set to true if you want a navbar fixed to the top
   stickyNav: false,
   analytics: {
@@ -45,9 +45,9 @@ const siteMetadata = {
     // posthogAnalytics: {
     //   posthogProjectApiKey: '', // e.g. 123e4567-e89b-12d3-a456-426614174000
     // },
-    // googleAnalytics: {
-    //   googleAnalyticsId: '', // e.g. G-XXXXXXX
-    // },
+    googleAnalytics: {
+      googleAnalyticsId: 'G-25P5NRC49L', // e.g. G-XXXXXXX
+    },
   },
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
@@ -59,7 +59,14 @@ const siteMetadata = {
     // content security policy in the `next.config.js` file.
     // Select a provider and use the environment variables associated to it
     // https://vercel.com/docs/environment-variables
-    provider: 'giscus', // supported providers: giscus, utterances, disqus
+    provider: 'utterances', // supported providers: giscus, utterances, disqus
+    utterancesConfig: {
+      repo: 'choi2021/choi2021.github.io',
+      issueTerm: 'pathname',
+      label: '',
+      theme: 'github-light',
+      darkTheme: 'github-dark',
+    },
     giscusConfig: {
       // Visit the link below, and follow the steps in the 'configuration' section
       // https://giscus.app/
