@@ -282,13 +282,13 @@ DOM 요소에 이벤트가 발생하면 DOM 트리를 따라 연쇄적인 반응
     </nav>
     <div>선택된 아이템: <em class="msg">apple</em></div>
     <script>
-      const $fruits = document.getElementById("fruits")
-      const $msg = document.querySelector(".msg")
+      const \$fruits = document.getElementById("fruits")
+      const \$msg = document.querySelector(".msg")
 
       function activate({ target }) {
-        ;[...$fruits.children].forEach($fruit => {
-          $fruit.classList.toggle("active", $fruit === target)
-          $msg.textContent = target.id
+        ;[...\$fruits.children].forEach(\$fruit => {
+          \$fruit.classList.toggle("active", \$fruit === target)
+          \$msg.textContent = target.id
         })
       }
 
@@ -332,18 +332,18 @@ DOM 요소에 이벤트가 발생하면 DOM 트리를 따라 연쇄적인 반응
     </nav>
     <div>선택된 아이템: <em class="msg">apple</em></div>
     <script>
-      const $fruits = document.getElementById("fruits")
-      const $msg = document.querySelector(".msg")
+      const \$fruits = document.getElementById("fruits")
+      const \$msg = document.querySelector(".msg")
 
       function activate({ target }) {
         if (!target.matches("#fruits > li")) return
 
-        ;[...$fruits.children].forEach($fruit => {
-          $fruit.classList.toggle("active", $fruit === target)
-          $msg.textContent = target.id
+        ;[...\$fruits.children].forEach(\$fruit => {
+          \$fruit.classList.toggle("active", \$fruit === target)
+          \$msg.textContent = target.id
         })
       }
-      $fruits.onclick = activate
+      \$fruits.onclick = activate
     </script>
   </body>
 </html>
@@ -478,7 +478,7 @@ DOM 요소에 이벤트가 발생하면 DOM 트리를 따라 연쇄적인 반응
 </html>
 ```
 
-위 코드에서 increase는 이벤트 핸들러로 등록되어있기 때문에 this가 class로 만들어질 instance를 가리키는 게 아니라 이벤트를 바인딩한 DOM 요소 ``this.$btn`를 가리킨다. 그렇기 때문에 ` this.$btn.textContent`는 `this.$btn.$btn.textContent`와 같아서 에러가 발생한다.
+위 코드에서 increase는 이벤트 핸들러로 등록되어있기 때문에 this가 class로 만들어질 instance를 가리키는 게 아니라 이벤트를 바인딩한 DOM 요소 `this.\$btn`를 가리킨다. 그렇기 때문에 ` this.\$btn.textContent`는 `this.\$btn.\$btn.textContent`와 같아서 에러가 발생한다.
 
 this를 인스턴스로 바인딩 시켜주기 위해서는 함수에 직접 bind로 명시적으로 정해주거나 arrow function을 이용해서 class field의 this를 메소드에 참조하게 할 수 있다.
 
