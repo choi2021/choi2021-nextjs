@@ -462,14 +462,14 @@ DOM 요소에 이벤트가 발생하면 DOM 트리를 따라 연쇄적인 반응
     <script>
       class App {
         constructor() {
-          this.$btn = document.querySelector(".btn")
+          this.\$btn = document.querySelector(".btn")
           this.count = 0
-          // this.$btn.onclick = this.increase.bind(this);
-          this.$btn.onclick = this.increase
+          // this.\$btn.onclick = this.increase.bind(this);
+          this.\$btn.onclick = this.increase
         }
         increase() {
           console.log(this) // <button class="btn">0</button>
-          this.$btn.textContent = ++this.count // Uncaught TypeError: Cannot set properties of undefined (setting 'textContent')
+          this.\$btn.textContent = ++this.count // Uncaught TypeError: Cannot set properties of undefined (setting 'textContent')
         }
       }
       new App()
@@ -492,13 +492,13 @@ this를 인스턴스로 바인딩 시켜주기 위해서는 함수에 직접 bin
     <script>
       class App {
         constructor() {
-          this.$btn = document.querySelector(".btn")
+          this.\$btn = document.querySelector(".btn")
           this.count = 0
-          this.$btn.onclick = this.increase.bind(this)
+          this.\$btn.onclick = this.increase.bind(this)
         }
         increase() {
           console.log(this) // App
-          this.$btn.textContent = ++this.count
+          this.\$btn.textContent = ++this.count
         }
       }
       new App()
@@ -517,11 +517,11 @@ this를 인스턴스로 바인딩 시켜주기 위해서는 함수에 직접 bin
     <script>
       class App {
         constructor() {
-          this.$btn = document.querySelector(".btn")
+          this.\$btn = document.querySelector(".btn")
           this.count = 0
-          this.$btn.onclick = this.increase
+          this.\$btn.onclick = this.increase
         }
-        increase = () => (this.$btn.textContent = ++this.count)
+        increase = () => (this.\$btn.textContent = ++this.count)
       }
       new App()
     </script>
