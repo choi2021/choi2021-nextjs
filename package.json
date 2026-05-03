@@ -68,10 +68,10 @@
   },
   "lint-staged": {
     "*.+(js|jsx|ts|tsx)": [
-      "yarn eslint --fix"
+      "eslint --fix"
     ],
     "*.+(js|jsx|ts|tsx|json|css|md|mdx)": [
-      "yarn prettier --write"
+      "prettier --write"
     ]
-  },
+  }
 }
