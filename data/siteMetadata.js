@@ -59,7 +59,12 @@ const siteMetadata = {
     // content security policy in the `next.config.js` file.
     // Select a provider and use the environment variables associated to it
     // https://vercel.com/docs/environment-variables
-    provider: 'utterances', // supported providers: giscus, utterances, disqus
+    provider: 'cusdis', // supported providers: giscus, utterances, disqus, cusdis
+    cusdisConfig: {
+      appId: process.env.NEXT_PUBLIC_CUSDIS_APP_ID, // e.g. 123e4567-e89b-12d3-a456-426614174000
+      host: 'https://cusdis.com',
+      lang: 'ko', // supported languages: en, ko, ja etc
+    },
     utterancesConfig: {
       repo: 'choi2021/choi2021-nextjs',
       issueTerm: 'pathname',
