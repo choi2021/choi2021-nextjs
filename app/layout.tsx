@@ -57,9 +57,9 @@ export const metadata: Metadata = {
     images: [siteMetadata.socialBanner],
   },
   icons: {
-    icon: '/static/favicons/favicon.svg',
-    shortcut: '/static/favicons/favicon.ico',
-    apple: '/static/favicons/apple-touch-icon.png',
+    icon: '/favicon.svg?v=2',
+    shortcut: '/favicon.svg?v=2',
+    apple: '/static/favicons/apple-touch-icon.png?v=2',
   },
 }
 
