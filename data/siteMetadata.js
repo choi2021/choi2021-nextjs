@@ -1,9 +1,9 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Choi2021 DevLog',
+  title: 'choi2021 DevLog',
   author: 'choi2021',
   headerTitle: 'choi2021 DevLog',
-  description: '매일의 시행착오를 기록하는 개발일지입니다.',
+  description: '일상에 스며 들수있는 서비스를 만들어가는 개발자 최영준입니다. 매일의 고민과 배움을 기록합니다.',
   language: 'ko-KR',
   theme: 'system', // system, dark or light
   siteUrl: 'https://choi2021.com',
@@ -17,14 +17,14 @@ const siteMetadata = {
   // twitter: 'https://twitter.com/Twitter',
   facebook: '',
   youtube: '',
-  linkedin: 'https://www.linkedin.com/in/%EC%98%81%EC%A4%80-%EC%B5%9C-3a316825a/',
+  linkedin: 'https://www.linkedin.com/in/youngjun-choi-3a316825a/',
   threads: '',
   instagram: '',
   medium: '',
   bluesky: '',
   locale: 'ko-KR',
   // set to true if you want a navbar fixed to the top
-  stickyNav: false,
+  stickyNav: true,
   analytics: {
     // If you want to use an analytics provider you have to add it to the
     // content security policy in the `next.config.js` file.
@@ -52,7 +52,7 @@ const siteMetadata = {
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
     // Please add your .env file and modify it according to your selection
-    provider: 'buttondown',
+    provider: null,
   },
   comments: {
     // If you want to use an analytics provider you have to add it to the
@@ -61,7 +61,7 @@ const siteMetadata = {
     // https://vercel.com/docs/environment-variables
     provider: 'utterances', // supported providers: giscus, utterances, disqus
     utterancesConfig: {
-      repo: 'choi2021/choi2021.github.io',
+      repo: 'choi2021/choi2021-nextjs',
       issueTerm: 'pathname',
       label: '',
       theme: 'github-light',
