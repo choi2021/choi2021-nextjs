@@ -127,7 +127,7 @@ export class PerformanceTracker {
 
 정의한 체크포인트에 따라 App Start time의 데이터를 정리해보면 개선 작업전 1월 24일부터 2월 14일간 90% 고수 유저 기준으로 OS별 데이터는 다음과 같이 정리할 수 있었다.
 
-<Table>
+<table>
 <tr>
     <th>체크포인트</th>
     <th>iOS</th>
@@ -153,7 +153,7 @@ export class PerformanceTracker {
     <td>6.5초 (+600ms)</td>
     <td>6.9초 (+700ms)</td>
 </tr>
-</Table>
+</table>
 
 구간별 시간을 통해서 앱 업데이트부터 로그인 + 홈화면 이동 구간, 업데이트 체크, App화면 초기화 순으로 오래걸리는 구간을 우선순위를 높여 작업을 진행하게 되었다.
 
@@ -276,7 +276,7 @@ const 초기화_실행 = async () => {
 아래 코드푸시 네트워크 응답 데이터를 보면 90% 유저를 기준으로 **android는 1.35초, iOS는 1.69초**가 걸리는 것을 볼 수 있다.
 동시성을 이용하더라도 오래걸리는 응답에 의존하기 때문에, 큰 개선을 기대하기는 어려웠다.
 
-<Table width="100%">
+<table width="100%">
 <tr>
     <th>iOS</th>
 </tr>
@@ -293,7 +293,7 @@ const 초기화_실행 = async () => {
         <img src="/static/images/2024-03-30-App-StartUp-time-개선/코드푸시데이터-android.png" />
     </td>
 </tr>
-</Table>
+</table>
 
 자체적으로 번들을 캐싱하는 방법도 고려해봤지만 생각보다 리소스가 클 것 같아 이후에 적용해보기로 계획하고 당시에는 넘어가게 되었다.
 
@@ -358,7 +358,7 @@ AB테스트 정보를 가져올 때는 로그인 전/후 전체 정보를 두번
 
 이렇게 구간별로 나누어 네트워크 최적화 작업을 진행하고, 2월 14일부터 3월 6일까지 고수 유저의 결과를 보았을 때 os별로 다음과 같은 결과를 얻을 수 있었다.
 
-<Table>
+<table>
 <tr>
     <th>체크포인트</th>
     <th>iOS</th>
@@ -384,7 +384,7 @@ AB테스트 정보를 가져올 때는 로그인 전/후 전체 정보를 두번
     <td>6.3초 (+2800ms, 기존대비 +2000ms)</td>
     <td>5.9초 (+2200ms, 기존대비 +1500ms)</td>
 </tr>
-</Table>
+</table>
 
 결과의 홈화면 이동 이후에 초기화 작업이 진행되지 않기 때문에 이제 측정 완료와 홈화면 이동을 동일하게 볼 수 있다. 결과를 보면 **로그인~홈화면이동** 구간을 제외하고 각 구간에서 개선이 있었다. **로그인~홈화면이동** 구간은 로그인 내부에서 진행하던 작업들을 분리해 후처리 작업을 함께 처리하게 수정했기 떄문에 이전 기록에 비해서 증가했다.
 
@@ -571,7 +571,7 @@ const UpdateProgress: React.FC<{ isProgressVisible: boolean }> = ({
 
 렌더링 최적화의 결과를 React Devtools를 이용해 측정해보았을 때 다음과 같은 결과를 얻을 수 있었다.
 
-<Table width="90%">
+<table width="90%">
 <tr>
     <th>리렌더링 최적화 Before</th>
 </tr>
@@ -588,7 +588,7 @@ const UpdateProgress: React.FC<{ isProgressVisible: boolean }> = ({
         <img src="/static/images/2024-03-30-App-StartUp-time-개선/rendering-tobe.png" />
     </td>
 </tr>
-</Table>
+</table>
 
 동일한 측정기준에서 총 27번의 리렌더링에서 15번으로 줄일 수 있었다. 더 줄일 수도 있지만 개발 환경에서만 렌더링되는 요소도 있고, React navigation, modal 등 서드파티 라이브러리 자체에서 발생하는 리렌더링도 있다보니 여기서 마무리했다.
 
@@ -596,7 +596,7 @@ const UpdateProgress: React.FC<{ isProgressVisible: boolean }> = ({
 
 1Q 동안 네트워크 최적화와 렌더링 최적화를 주로 진행했고, 90% 유저를 기준으로 4월 3일 90일간 90프로 고수 유저 기준으로 다음과 같은 결과를 얻을 수 있었다.
 
-<Table width="100%">
+<table width="100%">
 <tr>
     <th>iOS</th>
 </tr>
@@ -613,7 +613,7 @@ const UpdateProgress: React.FC<{ isProgressVisible: boolean }> = ({
         <img src="/static/images/2024-03-30-App-StartUp-time-개선/android-gosu-result.png" />
     </td>
 </tr>
-</Table>
+</table>
 
 결과를 분석해보면 홈화면 이동을 기준으로 iOS는 **6.5초에서 3.2초로 50%** 개선되었고, Android는 **6.9초에서 3.2초로 53%** 개선되었다.
 
