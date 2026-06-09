@@ -1,0 +1,395 @@
+---
+title: "무중단 배포를 위한 Next.js Static 파일 관리 전략"
+date: 2025-10-09
+summary: "배포할 때마다 발생하던 ChunkLoadError를 해결하기 위해 Next Build 결과물을 분석해보고 배포 전략에 대해 정리해보자"
+
+tags:
+  - next
+  - ci/cd
+  - deployment
+---
+
+[2025 9월 회고](https://choi2021.com/2025-10-05-2025%EB%85%84-9%EC%9B%94%ED%9A%8C%EA%B3%A0/)에서 이야기했던 배포할 때마다 발생하던 에러를 디버깅하면서 알게 된 Next.js 빌드 결과물의 구조와 올바른 배포 전략을 정리해보려 한다.
+
+## 문제 상황
+
+배포 시점마다 `ChunkLoadError`가 센트리에 급증하고, 잠시 후 다시 사라지는 패턴이 반복되고 있었다. 빈도가 높지 않아 우선순위를 뒤로 미뤘지만, 특정 시점에 트래픽이 급감한다는 노드 개발자분의 제보로 이것이 실제 사용자에게 영향을 주는 문제임을 인지하게 되었다.
+
+## Next.js 빌드 결과물 이해하기
+
+문제를 해결하기 위해서는 먼저 Next.js가 빌드 시 어떤 결과물을 만들고, 브라우저가 어떻게 이를 사용하는지 이해해야 해보자.
+
+### 프로젝트 구조
+
+간단한 Next.js 15 App Router 프로젝트를 예시로 살펴보자.
+
+```
+app/
+├── about/
+│   └── page.tsx
+├── layout.tsx
+└── page.tsx
+```
+
+### 빌드 결과물
+
+`next build` 실행 시 `.next` 폴더에 다음과 같은 구조가 생성된다.
+
+<img src="/static/images/2025-10-08-Next-서비스-배포하기/next_build.png"/>
+
+이 중 핵심적으로 봐야 할 부분은 세 가지다:
+
+1. **app-build-manifest.json** - 페이지별 필요한 번들 매핑
+2. **static/** - 브라우저에서 다운로드하는 JS/CSS
+3. **server/** - Node.js 프론트 서버에서 실행되는 코드
+
+---
+
+## 1. app-build-manifest.json
+
+`app-build-manifest.json`는 각 페이지가 필요로 하는 번들 파일들의 위치를 정의한다.
+
+```json
+{
+  "pages": {
+    "/about/page": [
+      "static/chunks/webpack-05cc406d6a87b1a9.js",
+      "static/chunks/4bd1b696-692f10ba759dfb60.js",
+      "static/chunks/517-7ba66467149c8b06.js",
+      "static/chunks/main-app-0368da5f48dd66a2.js",
+      "static/chunks/app/about/page-f21e94017376511e.js"
+    ]
+  }
+}
+```
+
+**파일 종류**는 아래와 같이 정리할 수 있다.
+
+- 공통 번들: `webpack-xxx.js`, `framework-xxx.js` (모든 페이지 공유)
+- 페이지 번들: `app/about/page-xxx.js` (해당 페이지만 사용)
+- Dynamic import: `85-xxx.js` (코드 스플리팅된 청크)
+
+**파일명의 해시:**
+
+```
+page-f21e94017376511e.js
+     └──────┬──────────┘
+      콘텐츠 해시
+```
+
+파일 내용이 변경되면 해시도 변경되어 새로운 파일명이 생성된다. 파일 변경이 되지 않으면 새롭게 만들어지지 않아 불필요한 파일 생성을 막고 캐싱을 적극적으로 사용할 수 있다.
+
+---
+
+## 2. Static 폴더
+
+브라우저가 다운로드하여 실행하는 JavaScript와 CSS 파일들이 위치한다.
+
+<img src="/static/images/2025-10-08-Next-서비스-배포하기/static.png"/>
+
+이 폴더 내 파일들은 `/_next/static/` 경로로 서빙되며, 페이지 방문 시 아래와 같이 HTML에 삽입된다:
+
+```html
+<script src="/_next/static/chunks/webpack-05cc406d6a87b1a9.js"></script>
+<script src="/_next/static/chunks/main-app-0368da5f48dd66a2.js"></script>
+<script src="/_next/static/chunks/app/about/page-f21e94017376511e.js"></script>
+```
+
+각 `<script>` 태그는 `app-build-manifest.json`에 정의된 번들 목록을 기반으로 자동 생성된다. 해당 태그가 생성되는 과정은 아래 Server 폴더 내용과 함께 알아보자.
+
+---
+
+## 3. Server 폴더
+
+Node.js 서버에서 실행되는 코드들이 들어있다.
+
+<img src="/static/images/2025-10-08-Next-서비스-배포하기/server.png"/>
+
+빌드 타입에 따라 다른 결과물이 생성된다:
+
+### SSG (Static Site Generation)
+
+```
+.next/server/app/
+└── _not-found.html  ← 빌드 시점에 완성된 HTML
+```
+
+빌드 시점에 HTML이 완성되어 저장되며, 요청 시 이 파일을 그대로 제공한다. HTML 내부에는 manifest에 정의된 script 태그들이 이미 삽입되어 있다:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/_next/static/chunks/webpack-xxx.js" async></script>
+    <script src="/_next/static/chunks/main-app-xxx.js" async></script>
+    <script src="/_next/static/chunks/app/page-xxx.js" async></script>
+  </head>
+  <body>
+    <div id="__next">
+      <!-- 서버에서 렌더링된 HTML -->
+    </div>
+  </body>
+</html>
+```
+
+### SSR (Server Side Rendering)
+
+```
+.next/server/app/about/
+└── page.js  ← HTML 생성 함수
+```
+
+요청마다 `page.js`를 실행하여 HTML을 동적으로 생성한다. 이때 `app-build-manifest.json`을 참조하여 필요한 `<script>` 태그를 삽입한다. 잠시 해당 script 태그가 삽입되는 과정을 next 패키지에서 알아보자.
+
+**Next.js 서버에서 HTML을 만드는 과정:**
+
+```typescript
+//next/src/server/get-page-files.ts
+export function getPageFiles(
+  buildManifest: BuildManifest,
+  page: string
+): readonly string[] {
+  const normalizedPage = denormalizePagePath(normalizePagePath(page))
+  let files = buildManifest.pages[normalizedPage]
+
+  if (!files) {
+    console.warn(
+      `Could not find files for ${normalizedPage} in .next/build-manifest.json`
+    )
+    return []
+  }
+
+  return files
+}
+
+// next/pages/_document
+
+function getDocumentFiles(
+  buildManifest: BuildManifest,
+  pathname: string,
+  inAmpMode: boolean
+): DocumentFiles {
+  const sharedFiles: readonly string[] = getPageFiles(buildManifest, "/_app")
+  const pageFiles: readonly string[] = inAmpMode
+    ? []
+    : getPageFiles(buildManifest, pathname)
+
+  return {
+    sharedFiles,
+    pageFiles,
+    allFiles: [...new Set([...sharedFiles, ...pageFiles])],
+  }
+}
+
+function getScripts(
+  context: HtmlProps,
+  props: OriginProps,
+  files: DocumentFiles
+) {
+  const { assetPrefix, buildManifest, assetQueryString } = context
+
+  const normalScripts = files.allFiles.filter(file => file.endsWith(".js"))
+  const lowPriorityScripts = buildManifest.lowPriorityFiles?.filter(file =>
+    file.endsWith(".js")
+  )
+
+  return [...normalScripts, ...lowPriorityScripts].map(file => {
+    return (
+      <script
+        key={file}
+        src={`${assetPrefix}/_next/${encodeURIPath(file)}${assetQueryString}`}
+        nonce={props.nonce}
+        async={!isDevelopment && disableOptimizedLoading}
+        defer={!disableOptimizedLoading}
+        crossOrigin={props.crossOrigin || crossOrigin}
+      />
+    )
+  })
+}
+
+export class Head extends React.Component<HeadProps> {
+  getScripts(files: DocumentFiles) {
+    return getScripts(this.context, this.props, files)
+  }
+
+  render() {
+    // 생략
+    const files: DocumentFiles = getDocumentFiles(
+      this.context.buildManifest,
+      this.context.__NEXT_DATA__.page,
+      process.env.NEXT_RUNTIME !== "edge" && inAmpMode
+    )
+
+    return (
+      <head {...getHeadHTMLProps(this.props)}>
+        {/* 기본 meta, link 태그들 */}
+        {head}
+        {children}
+        {/* 생략 */}
+        {/* Main Scripts */}
+        {!disableOptimizedLoading &&
+          !disableRuntimeJS &&
+          this.getScripts(files)}
+      </head>
+    )
+  }
+}
+```
+
+**핵심 흐름:**
+
+```
+사용자 요청 (/about)
+  ↓
+Next.js 서버
+  ↓
+1. app-build-manifest.json 읽기
+   → "/about/page": ["static/chunks/...", "static/chunks/app/about/page-xxx.js"]
+  ↓
+2. .next/server/app/about/page.js 실행
+   → React 컴포넌트를 HTML 문자열로 변환
+  ↓
+3. manifest에서 가져온 번들 파일들을 <script> 태그로 생성
+  ↓
+4. HTML + script 태그 조합
+  ↓
+브라우저로 전송
+```
+
+지금까지 페이지 진입시 Next 빌드 결과물이 서로 어떻게 연결되어서 서빙되는지 알아보았다. 이제 실제 ChunkLoadError 에러가 어떻게 발생하게 되었는지 어떻게 해결했는지 알아보자.
+
+---
+
+## 문제 발생 시나리오
+
+### 재현 환경
+
+클라이언트 컴포넌트가 포함된 SSR 페이지:
+
+```typescript
+// app/about/page.tsx
+export const dynamic = "force-dynamic"
+import LikeButton from "./LikeButton"
+
+export default async function AboutPage() {
+  const data = await fetch("...").then(r => r.json())
+  return (
+    <div>
+      <h1>About Page</h1>
+      <pre>{JSON.stringify(data)}</pre>
+      <LikeButton /> {/* 클라이언트 컴포넌트 */}
+    </div>
+  )
+}
+```
+
+### 타임라인 다이어그램
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ T=0: 구버전 서비스 운영 중                               │
+└─────────────────────────────────────────────────────────┘
+
+블루 서버 (v1)                    S3/CDN
+├─ manifest                       ├─ page-OLD_HASH.js ✅
+│  └─ page-OLD_HASH.js 참조       └─ (구버전 청크)
+└─ 사용자 요청 처리 중
+
+사용자 A → /about 접속
+  ↓
+블루 서버 SSR 실행
+  ↓
+HTML: <script src="...page-OLD_HASH.js">
+  ↓
+브라우저: page-OLD_HASH.js 다운로드 ✅
+
+
+┌─────────────────────────────────────────────────────────┐
+│ T=1: 새 버전 배포 시작 (--delete 옵션 사용)              │
+└─────────────────────────────────────────────────────────┘
+
+블루 서버 (v1) 계속 실행          S3/CDN 업데이트
+├─ manifest                       ├─ page-OLD_HASH.js ❌ 삭제!
+│  └─ page-OLD_HASH.js 참조       └─ page-NEW_HASH.js ✅ 업로드
+└─ 여전히 트래픽 받는 중
+
+그린 서버 (v2) 시작
+├─ manifest
+│  └─ page-NEW_HASH.js 참조
+└─ 헬스체크 대기 중
+
+
+┌─────────────────────────────────────────────────────────┐
+│ T=2: 문제 발생! (블루-그린 전환 전)                      │
+└─────────────────────────────────────────────────────────┘
+
+사용자 B → /about 접속
+  ↓
+로드밸런서 → 블루 서버(v1)로 라우팅
+  ↓
+블루 서버 SSR 실행
+  ↓
+HTML: <script src="...page-OLD_HASH.js">
+  ↓
+브라우저: page-OLD_HASH.js 요청
+  ↓
+S3/CDN: ❌ 404 Not Found (이미 삭제됨)
+  ↓
+ChunkLoadError 발생!
+
+
+┌─────────────────────────────────────────────────────────┐
+│ T=3: 블루-그린 전환 완료                                 │
+└─────────────────────────────────────────────────────────┘
+
+블루 서버 (v1) 종료               S3/CDN
+                                  └─ page-NEW_HASH.js ✅
+그린 서버 (v2) 활성화
+├─ manifest
+│  └─ page-NEW_HASH.js 참조
+└─ 모든 트래픽 수신
+
+사용자 C → /about 접속
+  ↓
+그린 서버 SSR 실행
+  ↓
+HTML: <script src="...page-NEW_HASH.js">
+  ↓
+브라우저: page-NEW_HASH.js 다운로드 ✅
+  ↓
+정상 동작 ✅
+```
+
+### 실제 재현 결과
+
+개발 환경에서 재현하기 위해 빌드 후 특정 청크를 삭제했다:
+
+```bash
+# 빌드
+npm run build
+
+rm .next/static/chunks/app/about/page-817d6baba2395b08.js
+
+# 서버 시작
+npm run start
+```
+
+브라우저에서 `/about` 접속 시:
+
+<img src="/static/images/2025-10-08-Next-서비스-배포하기/chunkError.png"/>
+
+## 해결 방법
+
+해결방법은 새로운 버전의 결과물을 배포할 때에도 `이전 버전의 static 결과물`을 서빙가능하도록 해주는 것이다.
+
+그러기 위해서 static 결과물은 따로 CDN에서 서빙하도록 수정했고, 해당 CDN 주소는 BUILD_ID를 기반으로 구분된 폴더로 서빙해서 독립적으로 관리할 수 있도록 했다. 사실 코어에서는 이미 해당방법을 사용하고 있어서 아주 간단하게 CLI 옵션을 키고 CDN의 동작을 수정하면 되는 상황이었다.
+
+기존 CSR 서비스에서 SSR 기반 서비스로 전환하면서 해당 CLI 옵션과 동작 설정이 누락되면서 발생했던 것 같다.
+
+---
+
+## 정리
+
+해당 이슈를 수정하면서 프론트 서버에 대한 이해도를 조금 더 높여야겠다는 생각이 들었다. 노드 개발자분이 제보하지 않으셨다면 지속적으로 트래픽이 떨어지는 구간이 발생했을 것이란 생각에 아찔했다.
+
+한편으로는 해당 이슈를 디버깅하면서 그냥 사용하고 있던 `Next Build` 결과물에 대한 이해와 배포 프로세스, 인프라 세팅에 대한 이해도가 한층 높아져 많이 배울 수 있었다.
