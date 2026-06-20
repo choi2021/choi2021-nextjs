@@ -1,0 +1,288 @@
+---
+title: "TS study: 타입 추론(1)"
+date: 2023-01-24
+
+tags:
+  - typescript
+series: "Typescript"
+---
+
+# 🙋‍♂️ 타입추론
+
+타입추론은 타입스크립트가 우리가 작성한 코드에 대해서 자동으로 타입을 추론해주는 것을 의미한다.
+
+```typescript
+const person = {
+  name: "so",
+  born: {
+    where: "asd",
+    when: "1233",
+  },
+  died: {
+    where: "asi",
+    when: "nov,201",
+  },
+}
+
+// 타입스크립트로 추론된 타입
+const person: {
+  name: string
+  born: {
+    where: string
+    when: string
+  }
+  died: {
+    where: string
+    when: string
+  }
+}
+```
+
+위 person 예제를 보면서 타입 추론이 정확하게 작동하고 있는 것을 볼 수 있다. 타입 추론을 이용했을 때 더 정확하게 타입이 정해지거나, 굳이 명시적으로 타입을 정할 필요가 없을 때에는 타입 구문을 생략하는 게 가독성을 높여준다.
+
+```typescript
+interface Product {
+  id: string
+  name: string
+  price: number
+}
+
+// 명시적으로 타입을 다 정한 경우
+function logProduct(product: Product) {
+  const id: number = product.id
+  const name: string = product.name
+  const price: number = product.price
+  console.log(id, name, price)
+}
+
+function logProduct(product: Product) {
+  const { id, name, price } = product
+  console.log(id, name, price)
+}
+```
+
+위 예제에서 `Product` interface에서 타입을 이미 정의했기 때문에 굳이 함수 내부에서 정의할 필요가 없었다.
+
+그러면 항상 타입 추론에 맡기면 되는 걸까?
+
+앞서 정리했던 타입시스템을 통해 배웠던 **객체 리터럴**과 **함수의 인자와 반환값**은 명시적으로 타입을 정의해 줄 필요가 있다.
+
+먼저 객체 리터럴의 경우 명시적으로 타입을 정의하면 `잉여 속성 체크`가 동작해 작성된 타입과 비교해 오타나 오류를 잡는데 도움을 줄 수 있다.
+
+함수의 경우 반환 값을 통해 오류를 막을 수 있다. 다음 예제를 보자.
+
+```typescript
+const cache: { [ticker: string]: number } = {}
+function getQuote(ticker: string): Promise<number> {
+  if (ticker in cache) {
+    return cache[ticker] // Promise<number>가 아니라 에러
+  }
+  return fetch(`https://quotes.example.com/?q=${ticker}`)
+    .then(response => response.json())
+    .then(quote => {
+      cache[ticker] = quote
+      return quote
+    })
+}
+```
+
+위 코드는 이미 존재하는 값의 경우 cache 데이터를 가져오고 cache된 값이 없다면 새로 요청하는 함수다. 하지만 cache값이 없을 때 `number`로 반환되기 때문에 에러를 던져주는 것을 볼 수 있다.
+
+이처럼 반환 타입을 명시함으로써 코드 자체적으로 인자를 넣었을 때 결과 값을 예측해 문서로써 역할을 할 수 있으며, 기존의 명명된 타입을 그대로 이용할 수 있는 장점도 가진다. 아래 코드를 보자.
+
+```typescript
+interface Vector2D {
+  x: number
+  y: number
+}
+
+function add(a: Vector2D, b: Vector2D) {
+  return { x: a.x + b.x, y: a.y + b.y } // {x:number y:number}
+}
+
+function add(a: Vector2D, b: Vector2D): Vector2D {
+  return { x: a.x + b.x, y: a.y + b.y }
+}
+```
+
+반환값 타입도 동일하게 `Vector 2D`를 예상했지만 다른 타입으로 반환 값이 추론되는 것을 볼 수 있다.
+
+정리해보면 명시적 타입이 필요한 경우는 객체리터럴을 선언해 잉여속성체크가 필요하거나, 함수의 인자와 반환값에 필요하며, 대부분의 경우 타입 추론에 맡겨도 된다고 한다.
+
+## 📦 다른 타입에 다른 변수 쓰기
+
+자바스크립트는 동적 타입 언어이기 때문에 같은 변수에 다른 타입을 할당할 수 있지만 타입스크립트에서는 할당할 수 없다. 이 경우에 다른 타입을 할당하기 위해서 유니온 타입으로 타입을 더 좁힐 수 있다.
+
+```typescript
+let id: string | number = "12-34-56"
+id = 123
+```
+
+하지만 이러한 경우에 오히려 string과 number의 공통 메소드만 제공해주는 등 사용하기 더 어려워진다. 차라리 **별도로 변수를 나누는 것**이 나은 방법이다.
+
+## 🎈 타입 넓히기
+
+타입스크립트가 타입을 추론할 때는 할당된 값을 통해 할당 가능한 값들의 집합을 유추한다.
+
+```typescript
+interface Vector3 {
+  x: number
+  y: number
+  z: number
+}
+
+function getComponent(vector: Vector3, axis: "x" | "y" | "z") {
+  return vector[axis]
+}
+
+let x = "x"
+let vec = { x: 10, y: 20, z: 30 }
+getComponent(vec, x) // Argument of type 'string' is not assignable to parameter of type '"x" | "y" | "z"'
+```
+
+위 예제에서 `let x= 'x'`로 선언되어 x변수에는 할당할 수 있는 타입을 고려해 string타입으로 추론했다. 그렇기 때문에 정확히 `"x" | "y" | "z"`가 필요한 `getComponent`함수의 인자로 전달 시 타입 에러가 발생했다.
+
+이러한 문제를 해결하기 위해서는 간단하게 `let`대신 `const`로 수정할 수 있다. `const`로 선언하면 `x`의 타입이 `'x'`가 되어 타입이 더 좁혀지기 때문에 앞서 발생한 에러를 막을 수 있다.
+
+하지만 `const`로 선언하는 방법은 객체와 배열에서는 여전히 문제가 된다. 배열의 경우의 `const x= [1,2,3]`라고 했을 때 `number[]`로 봐야할 지 `[number,number,number]`로 해야할 지 타입추론만으로는 어렵다.
+
+이러한 문제점을 해결하기 위해서는 먼저 명시적 타입을 전달해 주는 방법이 있다. 정확히 내가 원하는 타입으로 정해줄 수 있다.
+
+```typescript
+const arr = [1, 2, 3] // number[]
+const arr2: [number, number, number] = [1, 2, 3]
+```
+
+두 번째로는 `as const` 타입 단언을 통해 최대한 좁은 타입으로 추론하는 방법이 있다.
+
+```typescript
+const arr = [1, 2, 3] as const // readonly [1,2,3]
+```
+
+## 🙏 타입 좁히기
+
+#### null 체크/ undefined 체크
+
+타입 좁히기를 내가 가장 많이 썼던 경우는 `null` 체크 또는 `undefined` 체크였던 것 같다. 책에서도 대표적인 예시로 null 체크를 보여준다.
+
+```typescript
+const el = document.getElementById("foo") // HTMLElement | null
+if (!el) throw new Error("Unable to find #foo")
+el.innerHTML = "Party Time".blink()
+```
+
+위 예제에서 `el`값이 null이 될 수 있기 때문에 조건문으로 분기 처리를 해준 것을 볼 수 있다.
+
+#### instanceof와 내장 함수
+
+`instanceof`와 내장 함수를 이용해 타입을 좁힐 수 있다. `instanceof`를 이용 시에 중요했던 점은 런타임 연산자로 prototype chain에 해당 타겟이 있는지 확인하고 값을 확인하는 것을 이해하고 사용해야 한다.
+
+```typescript
+function contains(text: string, search: string | RegExp) {
+  if (search instanceof RegExp) {
+    search
+    return !!search.exec(text)
+  }
+  return text.includes(search)
+}
+
+function contains(text: string, terms: string | string[]) {
+  const termList = Array.isArray(terms) ? terms : [terms]
+  termList
+}
+```
+
+#### 속성체크와 discriminated Union Type
+
+또 다른 타입을 좁히는 방법으로 객체 타입의 경우 속성 체크를 이용해 좁힐 수 있고, 공통의 속성의 다른 값을 가지게 하는 `discriminated union` 구별된 유니온 타입을 이용할 수 있다. 실제 사용 경험은 속성 체크와 discriminated Union Type은 union Type으로 전달한 props를 분기 처리하기 위해 많이 사용했다.
+
+```typescript
+interface A {
+  a: number
+}
+interface B {
+  b: number
+}
+
+function pickAB(ab: A | B) {
+  if ("a" in ab) {
+    ab
+  } else {
+    ab
+  }
+  ab
+}
+
+interface UploadEvent {
+  type: "upload"
+  filename: string
+  contents: string
+}
+interface DownloadEvent {
+  type: "download"
+  filename: string
+}
+
+type AppEvent = UploadEvent | DownloadEvent
+
+function handleEvent(e: AppEvent) {
+  switch (e.type) {
+    case "download":
+      e // DownloadEvent
+      break
+    case "upload":
+      e // UploadEvent
+      break
+  }
+}
+```
+
+#### 사용자 정의 타입 가드
+
+타입을 좁히기 위한 마지막 방법으로 함수를 이용해 내가 원하는 타입으로 좁혀줄 수 있다.
+
+```typescript
+function isInputElement(el: HTMLElement): el is HTMLInputElement {
+  return "value" in el
+}
+
+function getElementContent(el: HTMLElement) {
+  if (isInputElement(el)) {
+    el // HTMLInputElement
+    return el.value
+  }
+  el // HTMLElement
+  return el.textContent
+}
+```
+
+## 한꺼번에 객체 생성하기
+
+객체를 생성할 때 주의할 점은 동적으로 속성을 추가하기 보다 필요한 속성들을 한번에 생성해야 타입추론의 이점을 이용할 수 있다.
+
+```typescript
+const pt = {}
+pt.x = 3 // Property 'x' does not exist on type '{}'.
+pt.y = 4 // Property 'y' does not exist on type '{}'.
+```
+
+위 예제에서는 처음 pt가 `{}`로 추론되기 때문에 에러가 발생했다. 이러한 원칙은 기존 객체 내용을 이용해 새로운 객체를 만들 때에도 동일하게 적용된다.
+
+```typescript
+const pt = { x: 3, y: 4 }
+const id = { name: "Pythagoras" }
+const namedPoint = {}
+Object.assign(namedPoint, pt, id)
+namedPoint.name // Property 'name' does not exist on type '{}'.
+```
+
+위 예제는 `namedPoint`는 동일하게 `{}`를 기준으로 추론이 되어 `Object.assign()`메소드를 이용해서 속성을 추가해도 에러가 발생되었다. 이점을 해결하기 위해서는 `spread operator`를 이용할 수 있다.
+
+```typescript
+const namedPoint = { ...pt, ...id } // const namedPoint: {name: string; x: number; y: number;}
+namedPoint.name
+```
+
+## 정리하며
+
+타입 추론은 엄청나게 편한 부분이지만, 더 정확하고 내가 원하는 타입으로 사용하기 위해서는 명시적으로 사용하거나 `as const`를 사용할 수 있다는 점을 알 수 있었다.
