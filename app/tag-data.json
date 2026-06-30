@@ -23,7 +23,7 @@
   "웹": 1,
   "보안": 1,
   "객체지향": 1,
-  "typescript": 12,
+  "typescript": 13,
   "vite": 1,
   "bundler": 1,
   "취업준비": 1,
@@ -52,11 +52,13 @@
   "webpack": 1,
   "hmr": 1,
   "webpack-dev-server": 1,
-  "next": 1,
-  "cicd": 1,
+  "next": 3,
+  "cicd": 3,
   "deployment": 1,
   "monorepo": 1,
   "yarn": 1,
   "pnp": 1,
-  "workspace": 1
+  "workspace": 1,
+  "build-optimization": 1,
+  "배포": 1
 }
